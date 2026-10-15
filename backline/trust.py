@@ -2,11 +2,19 @@
 
 `check(metric, uses)` runs any team-level defensive metric over the matches and reports:
 - coverage: share of organised-defence time in which every player the metric needs is on camera;
-- estimate effect: the metric on on-camera moments vs on all moments (which include off-camera estimates) -
-  median and largest difference, and whether teams keep their order (Spearman rho);
+- on-camera vs off-camera: the metric on moments when every needed player is on camera vs on moments when at
+  least one is off camera (estimated). The difference mixes which moments the camera shows with estimation error;
+  unlike a comparison with "all moments" it does not shrink as coverage rises. Median and largest difference,
+  and whether team-matches keep their order (Spearman rho);
 - within-match repeatability: first half vs second half (Pearson r);
 - across-match repeatability: this match vs the same team's other matches (Pearson r, with a permutation p
-  from shuffling team labels). Near 0 means the number describes the match, not the team.
+  from shuffling team labels; this null ignores match and opponent structure). With ~3 matches per team only
+  strong team effects are detectable (audit/trust_power.py), so a non-significant r is not evidence of no trait.
+
+Notes: ranks are depth order, so x0..x3 are the four deepest outfield players, not necessarily defenders (a back
+five loses a wing-back). Frames with fewer than 8 outfield players are skipped, and a metric needing ranks that
+are missing (e.g. after a red card) skips those frames. Each value needs MIN_SECONDS of play per team-match.
+`procs > 1` needs a picklable metric (a module-level function, not a lambda).
 
 A metric is a function DataFrame -> float, computed on the frames of one team in one match (and block).
 Frames come from `frames.team_frames`: x0..x9 / y0..y9 are the defending outfield players ordered by depth
@@ -30,12 +38,14 @@ BLOCKS = ("low_block", "medium_block", "high_block")
 
 @lru_cache(maxsize=None)
 def _frames(mid: int) -> pd.DataFrame:
-    cache = data.data_dir() / "_cache" / f"team_frames_{mid}.parquet"
+    """Team frames for one match: downloaded on first use, then cached as a pickle (no extra dependencies)."""
+    cache = data.data_dir() / "_cache" / f"team_frames_{mid}.pkl"
     if cache.exists():
-        return pd.read_parquet(cache)
+        return pd.read_pickle(cache)
+    data.download([mid], verbose=False)
     f = frames.team_frames(mid)
     cache.parent.mkdir(parents=True, exist_ok=True)
-    f.to_parquet(cache)
+    f.to_pickle(cache)
     return f
 
 
@@ -47,7 +57,7 @@ def _Y(df, ranks):
     return df[[f"y{i}" for i in ranks]].values
 
 
-# ---- built-in metrics (definitions fixed before results were looked at; see docs) ----
+# ---- built-in metrics (definitions fixed before results were looked at; see docs/trust_metrics.md) ----
 METRICS = {
     "back-line height (m from goal)": (range(4), lambda d: np.median(_X(d, range(4)).mean(1)) + 52.5),
     "back-line width (m)":            (range(4), lambda d: np.median(np.ptp(_Y(d, range(4)), 1))),
@@ -70,8 +80,10 @@ def _team_values(args):
         full = g[g[[f"x{i}" for i in uses]].notna().all(axis=1)]
         row = dict(match_id=mid, team_id=team, block=blk, seconds=len(full) / FPS, seconds_seen=len(m) / FPS)
         ok = lambda d: len(d) / FPS >= MIN_SECONDS
+        off = full[~seen.loc[full.index]]
+        row["seconds_off"] = len(off) / FPS
         row["seen"] = metric(m) if ok(m) else np.nan
-        row["all"] = metric(full) if ok(full) else np.nan
+        row["off"] = metric(off) if ok(off) else np.nan
         for h in (1, 2):
             mh = m[m.period == h]
             row[f"half{h}"] = metric(mh) if ok(mh) else np.nan
@@ -80,7 +92,7 @@ def _team_values(args):
 
 
 def team_values(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFrame:
-    """Per team-match and block: on-camera value, all-moments value, half values, seconds."""
+    """Per team-match and block: on-camera value, off-camera value, half values, seconds."""
     mids = matches or data.match_ids()
     jobs = [(m, metric, tuple(uses), tuple(blocks)) for m in mids]
     if procs > 1:
@@ -110,16 +122,17 @@ def summarise(v: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     out = []
     for blk, g in v.groupby("block"):
-        both = g.dropna(subset=["seen", "all"])
+        both = g.dropna(subset=["seen", "off"])
         halves = g.dropna(subset=["half1", "half2"])
         r_cross, n_cross, p_cross = _cross_r(g, rng)
         out.append(dict(
             block=blk,
             coverage=g.seconds_seen.sum() / g.seconds.sum() if g.seconds.sum() else 0.0,
             team_matches_measurable=int(g.seen.notna().sum()), team_matches=len(g),
-            gap_median=float((both.seen - both["all"]).median()) if len(both) else np.nan,
-            gap_max_abs=float((both.seen - both["all"]).abs().max()) if len(both) else np.nan,
-            rank_rho=float(both.seen.rank().corr(both["all"].rank())) if len(both) >= 8 else np.nan,
+            team_matches_compared=len(both),
+            gap_median=float((both.seen - both.off).median()) if len(both) else np.nan,
+            gap_max_abs=float((both.seen - both.off).abs().max()) if len(both) else np.nan,
+            rank_rho=float(both.seen.rank().corr(both.off.rank())) if len(both) >= 8 else np.nan,
             r_halves=float(np.corrcoef(halves.half1, halves.half2)[0, 1]) if len(halves) >= 8 else np.nan,
             n_halves=len(halves), r_cross=r_cross, n_cross=n_cross, p_cross=p_cross))
     return pd.DataFrame(out)
