@@ -1,16 +1,16 @@
 # "Usual line" overlay: test written before running it
 
-This test was written and committed in the development repository before any result was computed. Code: `audit/verify_usual.py`, feature code: `backline/usual.py` (kept, not used by the cards).
+This test was written and committed before any result was computed (development repository: rules committed 2026-10-09 09:59 ET, result 10:01 ET; the public repository has a fresh history). Code: `audit/verify_usual.py`, feature code: `backline/usual.py` (kept, not used by the cards).
 
 ## Feature
-For a scene (pass moment, defending team T, block B, ball position b), the "usual line" is the median left-to-right position of T's deepest four outfield players over T's on-camera frames in the same match, same block, with the ball within 6 m of b (10 m if too few), excluding 20 s either side of the scene. Fewer than 50 frames: not computed. Gap Δ = mean x of the actual back four − mean x of the usual line.
+For a scene (pass moment, defending team T, block B, ball position b), the "usual line" is the median position of each of T's deepest four outfield players, ordered left to right, over T's on-camera frames in the same match, same block, with the ball within 6 m of b (10 m if too few), excluding 20 s either side of the scene. Fewer than 50 frames: not computed. Gap Δ = mean x of the actual back four − mean x of the usual line.
 
 ## Question
 In scenes where a completed pass broke the last line, is the line further from its usual position than in comparable moments?
 
 ## Samples
 - Scenes: completed last-line-breaking passes in an organised block, all four on camera, usual line computable.
-- Controls: same match, team and block, on-camera frames with the ball within 6 m of the scene's ball position, at least 20 s away, and no opponent line-breaking pass in the next 3 s; up to 20 per scene (seed 7), each with its own usual line.
+- Controls: same match, team and block, on-camera frames with the ball within 6 m of the scene's ball position, at least 20 s away, and no opponent line-breaking pass in the next 3 s; up to 20 per scene (random order, seed 7 + match id mod 1000), each with its own usual line. Scenes with fewer than 5 controls are left out (none were).
 
 ## Decision rule (fixed in advance)
 - Primary: mean |Δ| scene minus mean |Δ| of its controls, permutation test swapping the scene label within each scene's set (5,000 permutations), two-sided.

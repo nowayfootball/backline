@@ -1,4 +1,6 @@
-"""Passes that break the last defensive line: who played the receiver onside, and what if they had held the line?
+"""Offside replay used by audit/offside_diag.py (the "would have been offside" card feature it was built for was dropped).
+
+Passes that break the last defensive line: who played the receiver onside, and what if they had held the line?
 
 For each SkillCorner `player_possession` that ends in a pass flagged `last_line_break`, at the pass frame:
 - offside line = second-deepest defending player (goalkeeper included), capped by the ball and the halfway line;

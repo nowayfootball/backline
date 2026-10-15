@@ -12,23 +12,27 @@ from .usual import COARSE
 
 DEF, ATT = "#2a78d6", "#eb6834"
 TXT = {
-    "en": dict(title="{team}: {n} completed passes played in behind the last line  ·  vs {opp}",
+    "en": dict(title="{team} defending: {n} opponent {passes} completed in behind the last line  ·  vs {opp}",
                sub=("Completed passes SkillCorner tags as breaking the last line, between its players (through) or outside its widest player (around); positions at the moment of the pass.\n"
-                    "Facts only, no verdict on who was at fault: replaying offside calls puts most targeted receivers onside (median +4 m) - position, event timing or receiver identity may be off, so do not read metre-level gaps.\n"
-                    "Dashed arrow = ball · dotted = receiver's run · faded = off camera (estimated) · line = deepest four outfield players (part of the line in a back five) · players beyond {xmax:.0f} m not drawn.\n"
+                    "Tracked positions only, no verdict on who was at fault. Replaying offside calls puts most targeted receivers onside (median +4 m):\n"
+                    "position, event timing or receiver identity may be off, so read positions as the rough shape, not metre-level gaps.\n"
+                    "Dashed arrow = ball · dotted = receiver's run · faded = off camera (estimated) · line = deepest four outfield players (part of the line in a back five).\n"
+                    "Players more than {xmax:.0f} m into the opponents' half are not drawn.  "
                     "Order: back four and receiver on camera first, then goal → shot → match time."),
                half={1: "1st half", 2: "2nd half"}, shot="shot", goal="GOAL", through="through the line", around="around the line",
                blocks={"low_block": "low block", "medium_block": "mid block", "high_block": "high block",
                        "defending_direct": "vs direct play", "defending_transition": "in transition", "chaotic": "broken play",
                        "defending_set_play": "set play", "defending_quick_break": "vs quick break"},
                legend_def="{team} (defending)", legend_att="{opp}", passer="passer", receiver="receiver", est=" (off camera)",
-               none="No completed pass got in behind the last line ({k} attempted, none completed). Dribbles and runs are not counted.",
-               own_goal="own goal ←", frame="frame {f}", shown="  (first {k} shown)", u_high="line higher than usual (3 m+)",
+               none="No completed pass got in behind the last line ({k} attempted). Dribbles and runs are not counted.",
+               own_goal="own goal ←", frame="tracking frame {f}", key="Blue = {team} (defending)  ·  orange = {opp} (attacking)", shown="  (first {k} shown)", u_high="line higher than usual (3 m+)",
                u_deep="line deeper than usual (3 m+)", u_same="line about usual", offcam="reference only (key players off camera)"),
-    "ko": dict(title="{team}: 최후방 라인 돌파 성공 패스 {n}개  ·  상대 {opp}",
+    "ko": dict(title="{team} 수비: 상대가 최후방 라인 뒤로 성공시킨 패스 {n}개{passes}  ·  상대 {opp}",
                sub=("SkillCorner가 최후방 라인 돌파로 표시한 성공 패스 — 라인 선수 사이(사이로) 또는 가장 바깥 선수 바깥(바깥으로). 위치는 패스 순간.\n"
-                    "사실만 표시하고 누구 잘못인지 판정하지 않음 — 오프사이드 판정을 재현해 보면 패스 대상 선수가 대부분 온사이드로 계산됨(중앙값 +4m). 위치·이벤트 시각·받는 선수 식별 중 어디서든 어긋날 수 있으니 m 단위 차이는 읽지 말 것.\n"
-                    "파선 화살표 = 공 · 점선 = 받는 선수 이동 · 흐린 점 = 화면 밖(추정) · 연결선 = 가장 깊은 필드 선수 4명(5백이면 라인 일부) · {xmax:.0f}m 밖 선수는 생략.\n"
+                    "트래킹 위치만 표시하고 누구 잘못인지 판정하지 않음. 오프사이드 판정을 재현해 보면 패스 대상 선수가 대부분 온사이드로 계산됨(중앙값 +4m):\n"
+                    "위치·이벤트 시각·받는 선수 식별 중 어디서든 어긋날 수 있으니, 위치는 대략적인 배치로 보고 m 단위 차이는 읽지 말 것.\n"
+                    "파선 화살표 = 공 · 점선 = 받는 선수 이동 · 흐린 점 = 화면 밖(추정) · 연결선 = 가장 깊은 필드 선수 4명(5백이면 라인 일부).\n"
+                    "상대 진영 {xmax:.0f}m보다 깊은 선수는 생략.  "
                     "순서: 최후방 4명·받는 선수가 화면에 잡힌 장면 먼저, 그 안에서 골 → 슈팅 → 경기 시간."),
                half={1: "전반", 2: "후반"}, shot="슈팅", goal="골", through="라인 사이로", around="라인 바깥으로",
                blocks={"low_block": "로우 블록", "medium_block": "미드 블록", "high_block": "하이 블록",
@@ -36,7 +40,7 @@ TXT = {
                        "defending_set_play": "세트피스", "defending_quick_break": "역습 대응"},
                legend_def="{team} (수비)", legend_att="{opp}", passer="패서", receiver="받는 선수", est="(화면 밖)",
                none="최후방 라인 뒤로 들어간 성공 패스 없음(시도 {k}개는 모두 실패). 드리블·침투는 세지 않음.",
-               own_goal="← 자기 골대", frame="프레임 {f}", shown="  (앞 {k}개만 표시)", u_high="평소보다 라인 높음(3m+)",
+               own_goal="← 자기 골대", frame="트래킹 프레임 {f}", key="파랑 = {team}(수비)  ·  주황 = {opp}(공격)", shown="  (앞 {k}개만 표시)", u_high="평소보다 라인 높음(3m+)",
                u_deep="평소보다 라인 깊음(3m+)", u_same="평소와 비슷한 라인", offcam="참고용(핵심 선수 화면 밖)"),
 }
 
@@ -69,25 +73,28 @@ def render(sc: list[dict], team_name: str, opp_name: str, out: Path, lang="en", 
     n = len(sc)
     cols = 2
     rows = max(1, math.ceil(n / cols))
-    H = 3.4 + 6.2 * rows
+    H = 4.3 + 6.2 * rows
     fig = plt.figure(figsize=(16, H), facecolor=SURFACE)
-    title = T["title"].format(team=team_name, n=total if total is not None else n, opp=opp_name)
+    nn = total if total is not None else n
+    title = T["title"].format(team=team_name, n=nn, opp=opp_name, passes=("pass" if nn == 1 else "passes") if lang == "en" else "")
     if total is not None and total > n:
         title += T["shown"].format(k=n)
-    fig.text(0.03, 1 - 0.5 / H, title, fontsize=22, fontweight="bold", color=INK, va="top")
-    fig.text(0.03, 1 - 1.15 / H, T["sub"].format(xmax=XMAX), fontsize=11.5, color=INK2, va="top", linespacing=1.55)
+    if len(title) > 70:                                   # wide fonts: break before the opponent
+        title = title.replace("  ·  ", "\n", 1)
+    fig.text(0.03, 1 - 0.4 / H, title, fontsize=21, linespacing=1.3, fontweight="bold", color=INK, va="top")
+    fig.text(0.03, 1 - 1.45 / H, T["sub"].format(xmax=XMAX), fontsize=11.5, color=INK2, va="top", linespacing=1.55)
     h = [Line2D([], [], marker="o", ls="", ms=11, color=DEF, label=T["legend_def"].format(team=team_name)),
          Line2D([], [], marker="o", ls="", ms=11, color=ATT, label=T["legend_att"].format(opp=opp_name))]
+    fig.text(0.03, 1 - 2.8 / H, T["key"].format(team=team_name, opp=opp_name), fontsize=12, color=INK, va="top")
     if n % 2 == 1:
-        lax = fig.add_subplot(fig.add_gridspec(rows, 2, left=0.03, right=0.985, top=1 - 3.1 / H, bottom=0.015,
+        lax = fig.add_subplot(fig.add_gridspec(rows, 2, left=0.03, right=0.985, top=1 - 3.75 / H, bottom=0.015,
                                                wspace=0.06, hspace=0.24)[rows - 1, 1])
         lax.axis("off")
         lax.legend(handles=h, loc="center", frameon=False, fontsize=15)
-    else:
-        fig.legend(handles=h, loc="upper right", bbox_to_anchor=(0.985, 1 - 0.4 / H), frameon=False, fontsize=12.5)
+
     if n == 0:
         fig.text(0.03, 0.4, T["none"].format(k=attempts), fontsize=14, color=INK)
-    gs = fig.add_gridspec(rows, cols, left=0.03, right=0.985, top=1 - 3.1 / H, bottom=0.015, wspace=0.06, hspace=0.24)
+    gs = fig.add_gridspec(rows, cols, left=0.03, right=0.985, top=1 - 3.75 / H, bottom=0.015, wspace=0.06, hspace=0.24)
     for i, s in enumerate(sc):
         ax = fig.add_subplot(gs[i // cols, i % cols])
         _half_pitch(ax, XMAX)
@@ -123,7 +130,7 @@ def render(sc: list[dict], team_name: str, opp_name: str, out: Path, lang="en", 
                 lab = T["receiver"] if p["id"] == s["receiver_id"] else T["passer"]
                 if not p["det"]:
                     lab += T["est"]
-                ax.annotate(lab, (p["x"], p["y"]), xytext=(0, -17 if p["y"] > 27 else 15), textcoords="offset points", ha="center", fontsize=10.5,
+                ax.annotate(lab, (p["x"], p["y"]), xytext=(0, 15 if p["id"] == s["receiver_id"] else -19), textcoords="offset points", ha="center", fontsize=10.5,
                             color=INK, fontweight="bold", zorder=7, bbox=dict(boxstyle="round,pad=0.15", fc=SURFACE, ec="none", alpha=.85))
         res = T["goal"] if s["lead_to_goal"] else (T["shot"] if s["lead_to_shot"] else "")
         g = s.get("usual_gap")
