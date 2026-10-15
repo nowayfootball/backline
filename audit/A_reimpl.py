@@ -1,7 +1,7 @@
 """Independent re-implementation of backline metrics for one match (audit A)."""
 import json, sys
 import numpy as np, pandas as pd
-D = '/home/opc/data/skillcorner/opendata/data/matches'
+D = 'data/opendata/data/matches'
 mid = int(sys.argv[1]) if len(sys.argv) > 1 else 1886347
 INCL_END = '--incl' in sys.argv
 B = ['low_block', 'medium_block', 'high_block']

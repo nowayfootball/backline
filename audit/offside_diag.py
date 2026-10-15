@@ -1,7 +1,7 @@
 import numpy as np, pandas as pd
 from multiprocessing import Pool
 from backline import data
-v=pd.read_parquet('/home/opc/data/skillcorner/offside_validation.parquet')
+v=pd.read_parquet('data/offside_validation.parquet')
 def one(mid):
     m=data.meta(mid); team,gk,home,side=data.roster(m)
     vv=v[v.match_id==mid]

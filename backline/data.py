@@ -40,7 +40,10 @@ def download(mids=None, verbose=True) -> None:
         base = data_dir() / str(mid)
         for name in ("dynamic_events.csv", "match.json", "phases_of_play.csv"):
             _fetch(f"{RAW}/matches/{mid}/{mid}_{name}", base / f"{mid}_{name}")
-        _fetch(f"{LFS}/matches/{mid}/{mid}_tracking_extrapolated.jsonl", base / f"{mid}_tracking_extrapolated.jsonl")
+        trk = base / f"{mid}_tracking_extrapolated.jsonl"
+        if not (trk.exists() and trk.stat().st_size > 1000):
+            print(f"downloading match {mid} tracking (~90 MB, first run only)...", flush=True)
+        _fetch(f"{LFS}/matches/{mid}/{mid}_tracking_extrapolated.jsonl", trk)
         if verbose:
             print("downloaded", mid, flush=True)
 

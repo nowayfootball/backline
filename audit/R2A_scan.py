@@ -1,7 +1,7 @@
 """R2A: scan all 20 matches x 2 teams; reception frame diagnostics."""
 import json, sys, time
 import numpy as np, pandas as pd
-sys.path.insert(0, "/home/opc/football_acup2/analysis/acup2/backline_repo")
+sys.path.insert(0, ".")
 from backline import data, scenes
 
 rows = []

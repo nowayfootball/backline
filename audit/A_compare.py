@@ -1,6 +1,6 @@
 """Compare audit A reimplementation frames with original backline.frames.back_four."""
 import sys, numpy as np, pandas as pd
-sys.path.insert(0, '/home/opc/football_acup2/analysis/acup2/backline_repo')
+sys.path.insert(0, '.')
 from backline import frames, metrics
 mid = 1886347
 import os
