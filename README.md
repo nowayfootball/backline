@@ -1,63 +1,68 @@
-# backline — the passes that beat your back line, on one page after the match
+# backline — can you trust this defensive metric from broadcast tracking?
 
-**In one line:** SkillCorner's event data tags passes that break a team's last line; `backline` gathers the completed ones into a page of scene cards drawn from tracking, adds a back-line match report, and shows how much the camera actually saw. Extra judgements we tried (offside, who was left behind, the usual line) did not hold up when tested, so they are left out.
+**In one line:** SkillCorner's tracking is built from broadcast video, so many defensive positions are off-camera estimates. `backline.trust` takes any team-level defensive metric and reports how much of it the camera actually saw, how much the estimates move it, and whether it repeats within and across matches. We ran it on seven common metrics (Table 1), then built scene cards (Figure 1) only from what held up.
 
 ## Why
 
-Moments when the back line is beaten are a natural starting point for a defensive review; `backline` lists them with the match clock so they can be found in the video.
+Line height or compactness needs several players at once, but the camera follows the ball. Unchecked, estimates and match-to-match noise can pass as a team's defensive identity.
 
-## Use
+## Check your own metric
+
+```python
+from backline import trust
+gap = lambda d: ((d.x4 + d.x5 + d.x6 + d.x7) - (d.x0 + d.x1 + d.x2 + d.x3)).median() / 4
+print(trust.check(gap, uses=range(8)))     # defence-midfield gap, needs the 8 deepest players
+```
+
+A metric gets one team's organised-defence frames in one match: `x0..x9`, `y0..y9` are the defending outfield players by depth (`x0` deepest; own goal at x = −52.5), `d0..d9` whether each was on camera. Per block, `check` reports coverage (time with every needed player on camera), on-camera versus all-moments values (difference, rank correlation), first-half versus second-half r, and same-team match-to-match r with a permutation p. A value needs 60 s on camera. `python -m backline.trust` reproduces Table 1; matches download automatically (about 90 MB each).
+
+**Table 1.** Seven common metrics, 20 A-League 24/25 matches (40 team-matches)
+
+| Metric (players needed) | All needed players on camera: low / mid / high block | On-camera minus all-moments value: low / mid (median) | Teams keep their order, mid (ρ) | Same team, other matches: low / mid (r) |
+|---|---|---|---|---|
+| Back-line height (4) | 71% / 31% / 3% | −0.6 / −1.9 m | 0.82 | 0.39 / 0.27 |
+| Back-line width (4) | 71% / 31% / 3% | −0.7 / −1.3 m | 0.81 | 0.08 / −0.01 |
+| Back-line spread (4) | 71% / 31% / 3% | 0.0 / 0.3 m | 0.76 | 0.22 / 0.40 |
+| Ball in front of back line (4) | 71% / 31% / 3% | −1.3 / −9.5 m | 0.32 | 0.44 / 0.08 |
+| Defence–midfield gap (8) | 54% / 26% / 3% | −0.4 / −0.6 m | 0.86 | 0.21 / 0.26 |
+| Team length (10) | 25% / 18% / 2% | −4.0 / −2.2 m | 0.58 | 0.52 / −0.20 |
+| Team width (10) | 25% / 18% / 2% | 0.1 / −0.2 m | 0.86 | −0.34 / 0.40 |
+
+What it shows:
+
+- **The high block cannot be measured:** no team-match reached 60 s with all needed players on camera.
+- **Whole-team compactness is the least visible.** All ten outfield players are on camera 18–25% of the time; estimates change low-block team length by a median 4 m (up to 11 m).
+- **On-camera moments look more compact** (mostly negative differences): consistent with the camera framing play where players are close together, so on-camera values are a selected sample, not the whole match.
+- **No metric was confirmed as a team trait.** Across the 14 metric–block pairs with data, none repeated across matches with p < 0.05 (lowest p: ball in front of back line, low block, r 0.44, p = 0.05), and the "ball in front of back line" mid-block ranking barely survives the estimates (ρ 0.32).
+
+Two checks support the tool: it reproduces the independently computed reliability values of the match report, and with a +5 m error placed only off camera (synthetic) it reports −5.0 m while the on-camera value is unchanged (`tests/test_trust.py`).
+
+## Scene cards built on what held up
 
 ```bash
 pip install .
 python -m backline 1996435 --team 869 --scenes
 ```
 
-The first run downloads that match (about 90 MB) from a pinned commit of the SkillCorner open data. Leave out `--team` for both teams. Each team gets a match report, plus scene cards with `--scenes`, written to `reports/`:
-
-1. **Scene cards** (Figure 1): every completed opponent pass SkillCorner tags as breaking the last defensive line, between its players (through) or outside its widest player (around). Incomplete attempts are left out by default (`--include-failed` adds them); dribbles and runs are not covered. Across the 20 A-League 24/25 matches there are 0 to 9 per team-match, 113 in total (58 through, 55 around).
-2. **Match report**: line height, width and spread (low and mid block), ball-side shift and moving together, each against the league.
+This writes to `reports/` a back-line match report (on-camera values, coverage and reliability) and scene cards: every completed opponent pass SkillCorner's event data tags as breaking the last line, between its players (through) or outside its widest player (around). Across the 20 matches there are 113 (58 through, 55 around).
 
 ![Figure 1](figures/fig1_scenes_en.png)
 
-**Figure 1.** Sydney FC v Adelaide United, the first 4 of 9 cards (`--max-scenes 4`). Each card shows the match clock, passer and receiver, through or around, the defensive phase, the tracking frame (10 fps), and any shot or goal. The pitch shows player positions at the moment of the pass (players more than 32 m into the opponents' half are not drawn), the ball's path (dashed arrow) and the receiver's run (dotted). Faded players were off camera (estimated positions); fully on-camera cards come first. Read positions as the rough shape, not metre-level gaps.
+**Figure 1.** Sydney FC v Adelaide United, the first 4 of 9 cards (`--max-scenes 4`): match clock, passer and receiver, through or around, defensive phase, tracking frame (10 fps), any shot or goal, and positions at the moment of the pass. Faded players were off camera; fully on-camera cards come first. Read positions as the rough shape, not metre-level gaps.
 
-### Other matches and leagues
+The cards make no judgement about fault, because the judgements we tried did not hold up. Replaying the 62 passes called offside, only 6 come out offside at the pass frame. A "defender left 2 m behind the line" flag fell apart: 8 of 14 flags used off-camera estimates and 5 vanished within ±0.5 s. A "usual line" overlay, tested with rules written before running it ([docs](docs/usual_line_test.md)), found no larger deviation in beaten scenes (2.9 m vs 3.5 m, p = 0.12).
 
-It should run on any match in the same SkillCorner open-data format (tested on the 20 A-League 24/25 matches): point `BACKLINE_DATA` at a folder with a `matches.json` listing the match ids and, per match, `<id>/<id>_tracking_extrapolated.jsonl`, `_dynamic_events.csv`, `_phases_of_play.csv` and `_match.json`. League dots and reliability are A-League 24/25 values; rebuild them with `python -m backline.league`. Event-only data cannot be used. (This submission uses only the matches provided for the Cup.)
+## Other matches and leagues
 
-## Only what the camera saw
-
-SkillCorner tracking comes from broadcast video; players outside the frame get estimated positions. All four back-line players are on camera in 71% of low-block frames, 31% of mid-block frames and 3% of high-block frames overall; a typical team-match had about 2 seconds of its roughly 4 minutes of high block on camera. So `backline`:
-
-- computes report metrics only from moments when all four are on camera, prints how many seconds that was, and marks the high block "not calculated". Mid-block values therefore describe moments with the ball near the line (a weaker version of this bias affects the low block);
-- shows each number with the sampling error among this match's on-camera moments (90%, resampling defensive phases; tracking error and camera selection are not included), against league dots that come from different amounts of on-camera time and give context, not a team ranking;
-- gives every metric's league reliability: first half against second half, and match to match within the same team (39 team-matches, 13 teams). Across matches, five of nine metric–block pairs did not repeat detectably (width, ball-side shift, moving together, low-block spread, mid-block height; r −0.28 to 0.27) and the rest reach only r 0.39–0.44, so no metric is presented as a team's habit.
-
-## What we tried and dropped
-
-Each was tested; failures were left out.
-
-**Table 1.** Features tested and dropped
-
-| Feature | Test | Result | Decision |
-|---|---|---|---|
-| "Would have been offside if the line had held" | Replay the 62 passes called offside | Only 6 of 62 come out offside at the pass frame; targeted receivers a median +4 m onside (position, event timing or receiver identity may be off) | Dropped; cards warn not to read metre-level gaps |
-| Flag a defender left 2 m+ behind the line | On-camera status and timing sensitivity of the 14 flags | 8 used off-camera estimates; 5 vanished within ±0.5 s (1 not checkable); only 4 were on camera and stable | Dropped |
-| Overlay the team's "usual line" in that match | Test written before running ([docs](docs/usual_line_test.md)): 54 beaten scenes vs similar moments | Gap from usual 2.9 m vs 3.5 m (p = 0.12); 46% of ordinary moments are already 3 m+ away | Dropped |
-| Mid-block "ball in front of line" | On-camera vs estimate-inclusive value | On-camera moments favour the ball near the line; typically ~9 m apart (up to ~18 m), teams reorder | Removed from the report |
-
-So `backline` does not judge who was at fault: it shows which moments these were and roughly where everyone stood, and leaves the judgement to the coach watching the video.
+Matches in the same SkillCorner open-data format should work (tested on these 20): point `BACKLINE_DATA` at a folder with `matches.json` and per-match `<id>/` files; rebuild league references with `python -m backline.league`. This submission uses only the matches provided for the Cup.
 
 ## Reproduce and test
 
 - Data is not included; `backline/data.py` downloads it from a pinned commit.
-- `python -m backline.league` rebuilds `league_reference.csv` and `reliability.json`.
-- Tests: `pip install ".[test]"` then `pytest` (2 synthetic, 4 on real matches; downloads two more matches), also run in GitHub Actions.
-- `audit/` holds the research notes behind Table 1 (not one-command reproductions).
+- `pip install ".[test]"`, then `pytest` (3 synthetic, 4 on real matches), also run in GitHub Actions.
+- `audit/` holds research notes behind the dropped features (not one-command reproductions).
 
 ## Notes
 
-- Licence: MIT (`LICENSE.md`).
-- Data: SkillCorner × PySport open data (A-League 24/25) only.
+- Licence: MIT (`LICENSE.md`). Data: SkillCorner × PySport open data (A-League 24/25) only.
 - AI use: Claude (Anthropic) helped write and review the code. Study design, judgements and final review are the author's.
