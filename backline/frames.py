@@ -55,3 +55,41 @@ def back_four(mid: int) -> pd.DataFrame:
     for i in range(4):
         df[f"x{i}_p5"] = [ahead(t, f, ph, p) for t, f, ph, p in zip(df.team_id, df.frame, df.phase_id, df[f"id{i}"])]
     return df
+
+
+def team_frames(mid: int) -> pd.DataFrame:
+    """Organised-defence frames with ALL defending outfield players, ordered by depth (x0 = deepest).
+
+    Columns x0..x9, y0..y9 (metres, defending team attacks +x) and d0..d9 (on camera?). Missing slots
+    (fewer than 10 outfield players, e.g. after a red card) are NaN / False. Used by backline.trust.
+    """
+    m = data.meta(mid)
+    team, gk, home, side = data.roster(m)
+    away = m["away_team"]["id"]
+    ph = data.phases(mid)
+    ph = ph[ph.team_out_of_possession_phase_type.isin(BLOCKS)].sort_values("frame_start")
+    fs, fe = ph.frame_start.values, ph.frame_end.values
+    tin, blk, pidx = ph.team_in_possession_id.values, ph.team_out_of_possession_phase_type.values, ph.index.values
+    rows = []
+    for fr in data.tracking(mid):
+        f, per = fr["frame"], fr.get("period")
+        if per is None:
+            continue
+        k = np.searchsorted(fs, f, side="right") - 1
+        if k < 0 or f > fe[k]:
+            continue
+        dteam = away if tin[k] == home else home
+        home_ltr = side[per] == "left_to_right"
+        s = 1.0 if (home_ltr if dteam == home else not home_ltr) else -1.0
+        pl = sorted((s * p["x"], s * p["y"], bool(p["is_detected"])) for p in fr["player_data"]
+                    if team.get(p["player_id"]) == dteam and p["player_id"] not in gk)
+        if len(pl) < 8:
+            continue
+        pl = pl[:10] + [(np.nan, np.nan, False)] * (10 - len(pl[:10]))
+        b = fr.get("ball_data") or {}
+        rows.append((mid, f, per, int(pidx[k]), blk[k], dteam,
+                     np.nan if b.get("x") is None else s * b["x"], np.nan if b.get("y") is None else s * b["y"],
+                     *[p[0] for p in pl], *[p[1] for p in pl], *[p[2] for p in pl]))
+    cols = (["match_id", "frame", "period", "phase_id", "block", "team_id", "ball_x", "ball_y"]
+            + [f"x{i}" for i in range(10)] + [f"y{i}" for i in range(10)] + [f"d{i}" for i in range(10)])
+    return pd.DataFrame(rows, columns=cols)
