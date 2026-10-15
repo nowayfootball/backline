@@ -12,9 +12,9 @@ from .usual import COARSE
 
 DEF, ATT = "#2a78d6", "#eb6834"
 TXT = {
-    "en": dict(title="{team}: passes played in behind the last line, {n}  ·  vs {opp}",
-               sub=("Completed passes played through or around the last defensive line into the space behind it (SkillCorner event tag); positions at the moment of the pass.\n"
-                    "Facts only, no verdict on who was at fault: replaying offside calls with this data puts most flagged players onside (median +4 m), so do not read metre-level gaps.\n"
+    "en": dict(title="{team}: {n} completed passes played in behind the last line  ·  vs {opp}",
+               sub=("Completed passes SkillCorner tags as breaking the last line, between its players (through) or outside its widest player (around); positions at the moment of the pass.\n"
+                    "Facts only, no verdict on who was at fault: replaying offside calls puts most targeted receivers onside (median +4 m) - position, event timing or receiver identity may be off, so do not read metre-level gaps.\n"
                     "Dashed arrow = ball · dotted = receiver's run · faded = off camera (estimated) · line = deepest four outfield players (part of the line in a back five) · players beyond {xmax:.0f} m not drawn.\n"
                     "Order: back four and receiver on camera first, then goal → shot → match time."),
                half={1: "1st half", 2: "2nd half"}, shot="shot", goal="GOAL", through="through the line", around="around the line",
@@ -25,9 +25,9 @@ TXT = {
                none="No completed pass got in behind the last line ({k} attempted, none completed). Dribbles and runs are not counted.",
                own_goal="own goal ←", frame="frame {f}", shown="  (first {k} shown)", u_high="line higher than usual (3 m+)",
                u_deep="line deeper than usual (3 m+)", u_same="line about usual", offcam="reference only (key players off camera)"),
-    "ko": dict(title="{team}: 최후방 라인 뒤로 패스가 들어간 장면 {n}개  ·  상대 {opp}",
-               sub=("최후방 라인 사이 또는 바깥으로 그 뒤 공간에 보낸 성공 패스(SkillCorner 이벤트 표시). 위치는 패스 순간.\n"
-                    "사실만 표시하고 누구 잘못인지 판정하지 않음 — 이 데이터로 오프사이드 판정을 재현해 보니 판정된 선수가 대부분 온사이드로 계산됨(중앙값 +4m). m 단위 차이는 읽지 말 것.\n"
+    "ko": dict(title="{team}: 최후방 라인 돌파 성공 패스 {n}개  ·  상대 {opp}",
+               sub=("SkillCorner가 최후방 라인 돌파로 표시한 성공 패스 — 라인 선수 사이(사이로) 또는 가장 바깥 선수 바깥(바깥으로). 위치는 패스 순간.\n"
+                    "사실만 표시하고 누구 잘못인지 판정하지 않음 — 오프사이드 판정을 재현해 보면 패스 대상 선수가 대부분 온사이드로 계산됨(중앙값 +4m). 위치·이벤트 시각·받는 선수 식별 중 어디서든 어긋날 수 있으니 m 단위 차이는 읽지 말 것.\n"
                     "파선 화살표 = 공 · 점선 = 받는 선수 이동 · 흐린 점 = 화면 밖(추정) · 연결선 = 가장 깊은 필드 선수 4명(5백이면 라인 일부) · {xmax:.0f}m 밖 선수는 생략.\n"
                     "순서: 최후방 4명·받는 선수가 화면에 잡힌 장면 먼저, 그 안에서 골 → 슈팅 → 경기 시간."),
                half={1: "전반", 2: "후반"}, shot="슈팅", goal="골", through="라인 사이로", around="라인 바깥으로",

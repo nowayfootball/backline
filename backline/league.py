@@ -1,8 +1,8 @@
 """Build the league reference from the provided A-League 24/25 matches.
 
 python -m backline.league  ->  backline/league_reference.csv  (every team-match, whole match)
-                               backline/reliability.json      (first-half vs second-half correlation per metric,
-                                                               computed with exactly the same metric code)
+                               backline/reliability.json      (per metric: first-half vs second-half r, match-to-match
+                                                               r within the same team, and on-camera vs estimate gap)
 """
 import json
 from multiprocessing import Pool

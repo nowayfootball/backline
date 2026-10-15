@@ -2,3 +2,5 @@ __pycache__/
 *.egg-info/
 reports/
 .pytest_cache/
+build/
+backline/league_all_rows.csv

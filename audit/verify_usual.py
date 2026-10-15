@@ -64,7 +64,7 @@ if __name__ == "__main__":
         rows = [r for rr in p.map(one, data.match_ids()) for r in rr]
     df = pd.DataFrame(rows)
     df = df[df.ctrl.apply(len) >= 5]
-    df.to_pickle("<data>/verify_usual.pkl")
+    df.to_pickle("data/verify_usual.pkl")
     print("scenes in S:", len(df), "| blocks:", df.block.value_counts().to_dict(), "| controls per scene median:", df.ctrl.apply(len).median())
     if len(df) < 20:
         print("S < 20: descriptive only")

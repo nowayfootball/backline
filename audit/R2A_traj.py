@@ -1,7 +1,7 @@
 """R2A: ball-receiver / ball-passer distance trajectories for outlier scenes."""
 import sys
 import numpy as np, pandas as pd
-sys.path.insert(0, "<repo>")
+sys.path.insert(0, ".")
 from backline import data
 df = pd.read_pickle("/tmp/r2a/scan.pkl")
 sel = sys.argv[1:]

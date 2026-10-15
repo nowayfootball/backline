@@ -1,7 +1,7 @@
 """R1A independent reimplementation of scene cards (from spec only)."""
 import json, sys
 import numpy as np, pandas as pd
-D = "<data>/matches"
+D = "data/opendata/data/matches"
 
 def run(mid, team):
     m = json.load(open(f"{D}/{mid}/{mid}_match.json"))

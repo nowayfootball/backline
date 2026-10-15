@@ -1,7 +1,7 @@
 """R2A: same-frame possession starts, halftime frame gaps, tracking read cost old vs new."""
 import sys, time, json
 import pandas as pd
-sys.path.insert(0, "<repo>")
+sys.path.insert(0, ".")
 from backline import data
 df = pd.read_pickle("/tmp/r2a/scan.pkl")
 for r in df[df.nxt_start_eq_end > 0].itertuples():

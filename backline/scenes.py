@@ -2,7 +2,8 @@
 
 Cards show facts only - where everyone was when the pass was played, the ball's path, the receiver's run.
 They make NO judgement about who was at fault:
-- broadcast tracking cannot reproduce offside calls (audit/offside_diag.py), so position errors can reach metres;
+- replaying offside calls fails (only 6 of 62 come out offside at the pass frame, audit/offside_diag.py): positions,
+  event timing or receiver identity can be off by metres, so metre-level gaps are not trustworthy;
 - a "player left behind the line" flag was tested and dropped: most flags used off-camera estimates, half vanished
   when the pass moment moved by 0.5 s, and marking / covering / mistake cannot be told apart (audit/R1B_robust.py).
 Coordinates: defending team attacks +x (own goal on the left at x = -52.5).
