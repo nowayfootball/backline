@@ -1,4 +1,4 @@
-"""VERIFY_USUAL.md: do line-break scenes deviate more from the usual line than comparable moments? (pre-registered)"""
+"""docs/usual_line_test.md: do line-break scenes deviate more from the usual line than comparable moments? (rules written before running)"""
 from multiprocessing import Pool
 
 import numpy as np

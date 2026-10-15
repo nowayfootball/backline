@@ -62,7 +62,7 @@ def team_metrics(frames: pd.DataFrame, team_id: int, seed: int = 0, n_boot: int 
             total_s, meas_s = len(allf) / FPS, len(m) / FPS
             rel = RELIABILITY.get(f"{name}|{blk}", {})
             row = dict(metric=name, block=blk, unit=spec["unit"], reliability=rel.get("r", np.nan), reliability_n=rel.get("n", 0),
-                       reliability_cross=rel.get("r_cross", np.nan),
+                       reliability_cross=rel.get("r_cross", np.nan), reliability_n_cross=rel.get("n_cross", 0),
                        seconds_in_block=round(total_s), seconds_measured=round(meas_s),
                        coverage=meas_s / total_s if total_s else 0.0, value=np.nan, lo=np.nan, hi=np.nan,
                        measurable=meas_s >= MIN_SECONDS, n_phases=int(m.phase_id.nunique()))

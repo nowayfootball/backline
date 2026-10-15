@@ -4,7 +4,7 @@ Cards show facts only - where everyone was when the pass was played, the ball's 
 They make NO judgement about who was at fault:
 - replaying offside calls fails (only 6 of 62 come out offside at the pass frame, audit/offside_diag.py): positions,
   event timing or receiver identity can be off by metres, so metre-level gaps are not trustworthy;
-- a "player left behind the line" flag was tested and dropped: most flags used off-camera estimates, half vanished
+- a "player left behind the line" flag was tested and dropped: 8 of 14 flags used off-camera estimates, 5 vanished
   when the pass moment moved by 0.5 s, and marking / covering / mistake cannot be told apart (audit/R1B_robust.py).
 Coordinates: defending team attacks +x (own goal on the left at x = -52.5).
 """
@@ -94,6 +94,7 @@ def scenes(mid: int, team_id: int, include_failed: bool = False) -> list[dict]:
                         ball_pass=ball(f0), ball_reception=ball(f1) if f1 else (np.nan, np.nan),
                         receiver_at_reception=next(((p["x"], p["y"]) for p in players(f1) if p["id"] == rec), None) if f1 else None))
     # most useful first: fully on camera, then those leading to a goal/shot, then match time
-    out.sort(key=lambda s: (not (s["line_on_camera"] and s["receiver_on_camera"]), not s["lead_to_goal"],
+    out.sort(key=lambda s: (not (s["line_on_camera"] and s["receiver_on_camera"] and s["receiver_on_camera_at_reception"]),
+                            not s["lead_to_goal"],
                             not s["lead_to_shot"], s["frame"]))
     return out

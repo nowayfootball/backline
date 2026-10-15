@@ -1,6 +1,6 @@
 """'Usual line': where this team's back four normally stood in THIS match when the ball was in a similar place.
 
-NOT USED IN THE CARDS. Pre-registered check (VERIFY_USUAL.md, audit/verify_usual.py) failed: in ordinary moments the
+NOT USED IN THE CARDS. Check written before running it (docs/usual_line_test.md, audit/verify_usual.py) failed: in ordinary moments the
 line is already >= 3 m away from this 'usual' line 46% of the time (median 2.7 m), and scenes where the line was
 beaten were not further from it (2.9 m vs 3.5 m, p = .12). Kept for transparency and reuse.
 

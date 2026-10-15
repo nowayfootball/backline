@@ -3,7 +3,7 @@
 Coordinates are flipped so the DEFENDING team attacks +x (own goal at x = -52.5).
 The back four is the four deepest outfield players at each frame. A frame is "measured"
 only when all four are detected by the camera; off-screen positions are estimates and
-are never used for metrics (see README, "Why coverage matters").
+are never used for metrics (see README, "Only what the camera saw").
 """
 import numpy as np
 import pandas as pd

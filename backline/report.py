@@ -22,8 +22,8 @@ TXT = {
                "width": "Line width (m)", "shift": "Ball-side shift (line moves N m when ball moves 10 m sideways)", "lockstep": "Moving together (speed spread while the line moves, m/s; lower = more in step)"},
         blocks={"low_block": "low block", "medium_block": "mid block", "all": "low + mid block"},
         meas="seen {s}s of {t}s", nm="not measurable: {s}s on camera",
-        rel="league r: halves {r:.2f} · matches {rc:.2f} (n={n})", league="grey dots = other A-League 24/25 team-matches where this could be measured (dot size = seconds measured)\ncoloured bar = sampling error among THIS match's on-camera moments (90%, resampling defensive phases; excludes tracking error and camera selection)\nleague r = how well the metric repeats between halves / between matches (13 teams); near 0 means read it as this match only",
-        shape="Typical back-line shape (median, measured frames)", attack="own goal ←", hb="High block: all four on camera for only {s}s of {t}s (league median {med}s) — not calculated.",
+        rel="league r: halves {r:.2f} (n={n}) · matches {rc:.2f} (n={nc})", league="grey dots = other team-matches in the league reference where this could be measured (dot size = seconds measured)\ncoloured bar = sampling error among THIS match's on-camera moments (90%, resampling defensive phases; excludes tracking error and camera selection)\nleague r = how well the metric repeats between halves / between matches ({nt} teams); near 0 means read it as this match only",
+        shape="This match: median back-line shape (on-camera frames)", attack="own goal ←", hb="High block: all four on camera for {s}s of {t}s (60 s needed; league median {med}s) — not calculated.",
         lower_is="lower = flatter", lowv="lower = more in step",
         lb_mid="mid block: not shown — on-camera moments there\nare biased towards the ball being near the line\n(on-camera vs estimate-inclusive: typically ~9 m apart)"),
     "ko": dict(
@@ -33,8 +33,8 @@ TXT = {
                "width": "라인 폭 (m)", "shift": "볼 쪽 이동 (공이 옆으로 10m 갈 때 라인 이동 m)", "lockstep": "함께 움직임 (라인 이동 중 속도 흩어짐 m/s, 낮을수록 같이)"},
         blocks={"low_block": "로우 블록", "medium_block": "미드 블록", "all": "로우+미드"},
         meas="{t}초 중 {s}초 화면", nm="측정 불가: 화면 {s}초",
-        rel="리그 r: 전·후반 {r:.2f} · 경기 간 {rc:.2f} (n={n})", league="회색 점 = 측정 가능했던 A리그 24/25 다른 팀-경기 (점 크기 = 측정 시간)\n색 막대 = 이 경기 화면 안 순간들 사이의 표본 오차 (90%, 수비 국면 재표집; 트래킹 오차·화면 선택 편향은 미포함)\n리그 r = 지표가 전·후반 / 경기 간에 되풀이되는 정도(13팀) — 0에 가까우면 이 경기만의 값으로 읽을 것",
-        shape="평소 백포 모양 (중앙값, 측정된 순간)", attack="← 자기 골대", hb="하이 블록: {t}초 중 4명이 모두 화면에 잡힌 시간 {s}초(리그 중앙값 {med}초) — 계산하지 않음.",
+        rel="리그 r: 전·후반 {r:.2f} (n={n}) · 경기 간 {rc:.2f} (n={nc})", league="회색 점 = 리그 기준값 중 측정 가능했던 다른 팀-경기 (점 크기 = 측정 시간)\n색 막대 = 이 경기 화면 안 순간들 사이의 표본 오차 (90%, 수비 국면 재표집; 트래킹 오차·화면 선택 편향은 미포함)\n리그 r = 지표가 전·후반 / 경기 간에 되풀이되는 정도({nt}팀) — 0에 가까우면 이 경기만의 값으로 읽을 것",
+        shape="이 경기 중앙값 백포 모양 (화면에 잡힌 순간)", attack="← 자기 골대", hb="하이 블록: {t}초 중 4명이 모두 화면에 잡힌 시간 {s}초(60초 필요, 리그 중앙값 {med}초) — 계산하지 않음.",
         lower_is="낮을수록 일직선", lowv="낮을수록 같이 움직임",
         lb_mid="미드 블록: 표시 안 함 — 화면에 잡힌 순간이\n'공이 라인 가까울 때'로 쏠려 있어\n추정값 포함 값과 보통 약 9m 차이"),
 }
@@ -70,7 +70,7 @@ def render(frames, met, team_id, team_name, opp_name, league: pd.DataFrame, out:
                           wspace=0.12, hspace=1.75)
     fig.text(0.03, 0.958, T["title"].format(team=team_name, opp=opp_name), fontsize=23, fontweight="bold", color=INK)
     fig.text(0.03, 0.935, T["sub"], fontsize=12.5, color=INK2, va="top", linespacing=1.4)
-    fig.text(0.03, 0.897, T["league"], fontsize=11.5, color=INK2, va="top", linespacing=1.4)
+    fig.text(0.03, 0.897, T["league"].replace("{nt}", str(league.team_id.nunique())), fontsize=11.5, color=INK2, va="top", linespacing=1.4)
     for j, blk in enumerate(("low_block", "medium_block")):
         fig.text(0.03 + j * 0.305, 0.822, T["blocks"][blk], fontsize=16, fontweight="bold", color=BLOCK_COLOR[blk])
     for i, name in enumerate(names):
@@ -103,7 +103,7 @@ def render(frames, met, team_id, team_name, opp_name, league: pd.DataFrame, out:
                 txt = f"{val:.{2 if r.metric == 'lockstep' else 1}f}{(' ' + r.unit) if r.unit else (' m' if r.metric == 'shift' else '')}  ·  {T['meas'].format(s=r.seconds_measured, t=r.seconds_in_block)}"
                 ax.text(1.0, 1.25, txt, transform=ax.transAxes, ha="right", va="bottom", fontsize=12, color=INK2)
                 if pd.notna(r.reliability):
-                    ax.text(1.0, 0.98, T['rel'].format(r=r.reliability, rc=r.reliability_cross, n=int(r.reliability_n)), transform=ax.transAxes,
+                    ax.text(1.0, 0.98, T['rel'].format(r=r.reliability, rc=r.reliability_cross, n=int(r.reliability_n), nc=int(r.reliability_n_cross)), transform=ax.transAxes,
                             ha="right", va="bottom", fontsize=10.5, color=INK2)
             else:
                 ax.text(0.5, 0, T["nm"].format(s=r.seconds_measured), transform=ax.transAxes, ha="center", va="center", fontsize=12, color=INK2)
