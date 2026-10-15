@@ -24,7 +24,7 @@ The first run downloads that match (about 90 MB) from a pinned commit of the Ski
 
 ### Other matches and leagues
 
-It should run on any match in the same SkillCorner open-data format (tested on the 20 A-League 24/25 matches): point `BACKLINE_DATA` at a folder holding `<id>_tracking_extrapolated.jsonl`, `<id>_dynamic_events.csv`, `<id>_phases_of_play.csv` and `<id>_match.json` for each match. The report's league dots and reliability figures are A-League 24/25 values; rebuild them for another league with `python -m backline.league`. Event-only data cannot be used.
+It should run on any match in the same SkillCorner open-data format (tested on the 20 A-League 24/25 matches): point `BACKLINE_DATA` at a folder holding `<id>_tracking_extrapolated.jsonl`, `<id>_dynamic_events.csv`, `<id>_phases_of_play.csv` and `<id>_match.json` for each match. The report's league dots and reliability figures are A-League 24/25 values; rebuild them for another league with `python -m backline.league`. Event-only data cannot be used. (This submission itself uses only the matches provided for the Cup.)
 
 ## Only what the camera saw
 
