@@ -11,3 +11,5 @@ later removed, so they do not all run against the current code.
   `backline.breaks.all_breaks(which="validation").to_parquet("data/offside_validation.parquet")`.
 - `R2A_*`: code audit of the scene cards (reception frame, period sign, ordering).
 - `verify_usual.py`: the "usual line" test (`docs/usual_line_test.md`).
+- `trust_power.py` → `trust_power.csv`: power of the match-to-match test per metric and block at the team-matches
+  actually measured (~20 min on 3 cores after `python -m backline.trust` has built the frame cache).

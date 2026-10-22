@@ -17,6 +17,11 @@ def data_dir() -> Path:
     return d
 
 
+def league_dir() -> Path:
+    """League reference folder: BACKLINE_LEAGUE if set (built by `python -m backline.league`), else the packaged one."""
+    return Path(os.environ["BACKLINE_LEAGUE"]) if os.environ.get("BACKLINE_LEAGUE") else Path(__file__).parent
+
+
 def _fetch(url: str, dest: Path) -> Path:
     if dest.exists() and dest.stat().st_size > 1000:
         return dest

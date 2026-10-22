@@ -6,6 +6,9 @@
   least one is off camera (estimated). The difference mixes which moments the camera shows with estimation error;
   unlike a comparison with "all moments" it does not shrink as coverage rises. Median and largest difference,
   and whether team-matches keep their order (Spearman rho);
+- same ball position: the on- vs off-camera difference again, but only between moments with the ball in the same
+  place (5 m along × three bands across), so the part due to which moments the camera shows is taken out. What is
+  left mixes estimation error with players being off camera because of where they stand;
 - within-match repeatability: first half vs second half (Pearson r);
 - across-match repeatability: this match vs the same team's other matches (Pearson r, with a permutation p
   from shuffling team labels; this null ignores match and opponent structure). With ~3 matches per team only
@@ -20,6 +23,17 @@ A metric is a function DataFrame -> float, computed on the frames of one team in
 Frames come from `frames.team_frames`: x0..x9 / y0..y9 are the defending outfield players ordered by depth
 (x0 deepest, defending team attacks +x, own goal at x = -52.5); d0..d9 say whether each was on camera.
 `uses` lists the depth ranks the metric needs (e.g. range(4) for the back four).
+
+Columns returned by `check` (one row per block):
+    coverage                      share of time with every needed player on camera
+    team_matches(_measurable)     team-matches in the block / with 60 s on camera
+    gap_median, gap_ci_lo/hi      on- minus off-camera value, median over team-matches, 95% interval (resampling teams)
+    gap_max_abs                   largest absolute on/off difference for one team-match
+    matched_gap_median, _ci_lo/hi the same at the same ball position; team_matches_matched = how many had enough time
+    rank_rho                      Spearman correlation of on-camera and off-camera values across team-matches
+    r_halves, n_halves            first half vs second half
+    r_cross, r_cross_ci_lo/hi, n_cross, p_cross   this match vs the same team's other matches, Fisher 95% interval,
+                                  permutation p; `python -m backline.trust` adds q_cross (Benjamini-Hochberg)
 
     python -m backline.trust            # the built-in metric set, all provided matches -> trust_table.csv
 """
@@ -84,11 +98,39 @@ def _team_values(args):
         row["seconds_off"] = len(off) / FPS
         row["seen"] = metric(m) if ok(m) else np.nan
         row["off"] = metric(off) if ok(off) else np.nan
+        row["matched"], row["seconds_matched"] = _matched(metric, m, off)
         for h in (1, 2):
             mh = m[m.period == h]
             row[f"half{h}"] = metric(mh) if ok(mh) else np.nan
         out.append(row)
     return out
+
+
+CELL_SECONDS = 5
+
+
+def _ball_cell(d: pd.DataFrame) -> pd.Series:
+    """Ball position cell: 5 m along the pitch x three bands across (|y| <= 11 m, left, right)."""
+    band = np.select([d.ball_y > 11, d.ball_y < -11], [1, -1], 0)
+    return pd.Series(np.floor(d.ball_x.values / 5).astype("int64") * 3 + band, index=d.index)
+
+
+def _matched(metric, seen: pd.DataFrame, off: pd.DataFrame):
+    """On- minus off-camera value between moments with the ball in the same cell, weighted by on-camera time."""
+    seen, off = seen.dropna(subset=["ball_x", "ball_y"]), off.dropna(subset=["ball_x", "ball_y"])
+    if not len(seen) or not len(off):
+        return np.nan, 0.0
+    cs, co = _ball_cell(seen), _ball_cell(off)
+    diffs, w = [], []
+    for c, g in seen.groupby(cs):
+        o = off[co == c]
+        if len(g) / FPS >= CELL_SECONDS and len(o) / FPS >= CELL_SECONDS:
+            diffs.append(metric(g) - metric(o))
+            w.append(len(g))
+    secs = sum(w) / FPS
+    if secs < MIN_SECONDS:
+        return np.nan, secs
+    return float(np.average(diffs, weights=w)), secs
 
 
 def team_values(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFrame:
@@ -104,18 +146,40 @@ def team_values(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFr
 
 
 def _cross_r(v: pd.DataFrame, rng, n_perm=2000):
-    """This match vs mean of the same team's other matches; permutation p by shuffling team labels."""
+    """This match vs mean of the same team's other matches; permutation p by shuffling team labels, (k+1)/(n+1)."""
     v = v.dropna(subset=["seen"]).reset_index(drop=True)
-    def stat(teams):
-        cnt = v.groupby(teams).seen.transform("size")
-        oth = (v.groupby(teams).seen.transform("sum") - v.seen) / (cnt - 1)
+    x = v.seen.values.astype(float)
+    codes = pd.factorize(v.team_id)[0]
+    def stat(c):
+        cnt = np.bincount(c)[c]
         ok = cnt > 1
-        return np.corrcoef(v.seen[ok], oth[ok])[0, 1] if ok.sum() >= 8 else np.nan, int(ok.sum())
-    r, n = stat(v.team_id.values)
+        if ok.sum() < 8:
+            return np.nan, int(ok.sum())
+        oth = (np.bincount(c, weights=x)[c] - x)[ok] / (cnt[ok] - 1)
+        return np.corrcoef(x[ok], oth)[0, 1], int(ok.sum())
+    r, n = stat(codes)
     if np.isnan(r):
         return r, n, np.nan
-    null = np.array([stat(rng.permutation(v.team_id.values))[0] for _ in range(n_perm)])
-    return r, n, float((np.abs(null) >= abs(r)).mean())
+    null = np.array([stat(rng.permutation(codes))[0] for _ in range(n_perm)])
+    return r, n, float(((np.abs(null) >= abs(r)).sum() + 1) / (n_perm + 1))
+
+
+def _fisher_ci(r, n):
+    if np.isnan(r) or n < 4:
+        return np.nan, np.nan
+    z, se = np.arctanh(r), 1 / np.sqrt(n - 3)
+    return float(np.tanh(z - 1.96 * se)), float(np.tanh(z + 1.96 * se))
+
+
+def _team_boot(d: pd.Series, teams: pd.Series, rng, n_boot=2000):
+    """95% interval of the median difference, resampling teams."""
+    d, teams = d.values, teams.values
+    if len(d) < 8:
+        return np.nan, np.nan
+    groups = [d[teams == t] for t in np.unique(teams)]
+    meds = [np.median(np.concatenate([groups[k] for k in rng.integers(0, len(groups), len(groups))]))
+            for _ in range(n_boot)]
+    return tuple(float(q) for q in np.percentile(meds, [2.5, 97.5]))
 
 
 def summarise(v: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
@@ -123,19 +187,37 @@ def summarise(v: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
     out = []
     for blk, g in v.groupby("block"):
         both = g.dropna(subset=["seen", "off"])
+        mt = g.dropna(subset=["matched"])
         halves = g.dropna(subset=["half1", "half2"])
         r_cross, n_cross, p_cross = _cross_r(g, rng)
+        gap = both.seen - both.off
         out.append(dict(
             block=blk,
             coverage=g.seconds_seen.sum() / g.seconds.sum() if g.seconds.sum() else 0.0,
             team_matches_measurable=int(g.seen.notna().sum()), team_matches=len(g),
             team_matches_compared=len(both),
-            gap_median=float((both.seen - both.off).median()) if len(both) else np.nan,
-            gap_max_abs=float((both.seen - both.off).abs().max()) if len(both) else np.nan,
+            gap_median=float(gap.median()) if len(both) else np.nan,
+            gap_ci=_team_boot(gap, both.team_id, rng),
+            gap_max_abs=float(gap.abs().max()) if len(both) else np.nan,
+            matched_gap_median=float(mt.matched.median()) if len(mt) else np.nan,
+            matched_gap_ci=_team_boot(mt.matched, mt.team_id, rng),
+            team_matches_matched=len(mt),
             rank_rho=float(both.seen.rank().corr(both.off.rank())) if len(both) >= 8 else np.nan,
             r_halves=float(np.corrcoef(halves.half1, halves.half2)[0, 1]) if len(halves) >= 8 else np.nan,
-            n_halves=len(halves), r_cross=r_cross, n_cross=n_cross, p_cross=p_cross))
-    return pd.DataFrame(out)
+            n_halves=len(halves), r_cross=r_cross, r_cross_ci=_fisher_ci(r_cross, n_cross), n_cross=n_cross,
+            p_cross=p_cross))
+    t = pd.DataFrame(out)
+    for c in ("gap_ci", "matched_gap_ci", "r_cross_ci"):
+        t[[c + "_lo", c + "_hi"]] = pd.DataFrame(t.pop(c).tolist(), index=t.index)
+    return t
+
+
+def bh_q(p: pd.Series) -> pd.Series:
+    """Benjamini-Hochberg q values (NaN kept)."""
+    ok = p.dropna().sort_values()
+    m = len(ok)
+    q = (ok * m / np.arange(1, m + 1))[::-1].cummin()[::-1].clip(upper=1)
+    return q.reindex(p.index)
 
 
 def check(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFrame:
@@ -154,5 +236,6 @@ if __name__ == "__main__":
         print(t.round(2).to_string(index=False), flush=True)
         tables.append(t)
     res = pd.concat(tables, ignore_index=True)
+    res["q_cross"] = bh_q(res.p_cross.where(res.block != "high_block"))
     res.to_csv("trust_table.csv", index=False)
     print("saved trust_table.csv")

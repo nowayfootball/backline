@@ -1,0 +1,16 @@
+metric,block,team_matches,teams,power_icc0.0,power_icc0.2,power_icc0.4,power_icc0.6
+back-line height (m from goal),low_block,40,13,0.047,0.144,0.481,0.836
+back-line height (m from goal),medium_block,40,13,0.057,0.149,0.478,0.843
+back-line width (m),low_block,40,13,0.043,0.128,0.475,0.85
+back-line width (m),medium_block,40,13,0.04,0.15,0.478,0.848
+back-line spread (m),low_block,40,13,0.05,0.12,0.463,0.827
+back-line spread (m),medium_block,40,13,0.046,0.149,0.465,0.828
+ball in front of back line (m),low_block,40,13,0.063,0.122,0.461,0.843
+ball in front of back line (m),medium_block,40,13,0.042,0.117,0.479,0.846
+defence-midfield gap (m),low_block,37,13,0.037,0.133,0.443,0.811
+defence-midfield gap (m),medium_block,37,13,0.059,0.134,0.432,0.775
+team length (m),low_block,23,13,0.042,0.061,0.154,0.41
+team length (m),medium_block,25,13,0.064,0.073,0.187,0.462
+team width (m),low_block,23,13,0.049,0.047,0.138,0.408
+team width (m),medium_block,25,13,0.053,0.075,0.19,0.437
+all 40 team-matches,-,40,13,0.06,0.147,0.493,0.829

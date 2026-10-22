@@ -25,7 +25,8 @@ METRICS = {
     "lockstep":  dict(blocks=("all",), unit="m/s"),
 }
 # first-half vs second-half correlation across A-League 24/25 team-matches, written by `python -m backline.league`
-_REL = Path(__file__).with_name("reliability.json")
+from .data import league_dir
+_REL = league_dir() / "reliability.json"
 RELIABILITY = json.loads(_REL.read_text()) if _REL.exists() else {}
 
 

@@ -3,72 +3,54 @@
   "r": 0.41,
   "n": 29,
   "r_cross": 0.22,
-  "n_cross": 39,
-  "gap_median": 0.04,
-  "r_measured_vs_estimate": 0.96
+  "n_cross": 39
  },
  "flatness|medium_block": {
   "r": 0.56,
   "n": 24,
   "r_cross": 0.4,
-  "n_cross": 39,
-  "gap_median": 0.31,
-  "r_measured_vs_estimate": 0.75
+  "n_cross": 39
  },
  "height|low_block": {
   "r": 0.32,
   "n": 29,
   "r_cross": 0.39,
-  "n_cross": 39,
-  "gap_median": -0.61,
-  "r_measured_vs_estimate": 0.92
+  "n_cross": 39
  },
  "height|medium_block": {
   "r": 0.54,
   "n": 24,
   "r_cross": 0.27,
-  "n_cross": 39,
-  "gap_median": -1.85,
-  "r_measured_vs_estimate": 0.83
+  "n_cross": 39
  },
  "line_ball|low_block": {
   "r": 0.42,
   "n": 29,
   "r_cross": 0.44,
-  "n_cross": 39,
-  "gap_median": -1.33,
-  "r_measured_vs_estimate": 0.9
+  "n_cross": 39
  },
  "lockstep|all": {
   "r": 0.44,
   "n": 40,
   "r_cross": -0.28,
-  "n_cross": 39,
-  "gap_median": -0.0,
-  "r_measured_vs_estimate": 1.0
+  "n_cross": 39
  },
  "shift|all": {
   "r": 0.41,
   "n": 40,
   "r_cross": -0.08,
-  "n_cross": 39,
-  "gap_median": 0.01,
-  "r_measured_vs_estimate": 0.92
+  "n_cross": 39
  },
  "width|low_block": {
   "r": 0.43,
   "n": 29,
   "r_cross": 0.08,
-  "n_cross": 39,
-  "gap_median": -0.72,
-  "r_measured_vs_estimate": 0.9
+  "n_cross": 39
  },
  "width|medium_block": {
   "r": 0.6,
   "n": 24,
   "r_cross": -0.01,
-  "n_cross": 39,
-  "gap_median": -1.29,
-  "r_measured_vs_estimate": 0.87
+  "n_cross": 39
  }
 }

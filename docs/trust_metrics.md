@@ -19,8 +19,28 @@ at 20% coverage but −0.09 m at 70%). It was replaced by on-camera versus off-c
 player off camera), which recovers the error at any coverage. This was a fix of the method, applied to every metric.
 
 ## Power of the match-to-match test
-`audit/trust_power.py` simulates the real design (13 teams, 1–7 matches each): false-positive rate 0.04; detection
-rate 0.16, 0.43 and 0.85 for team effects explaining 20%, 40% and 60% of the variance.
+`audit/trust_power.py` simulates the real design per metric and block, using only the team-matches that had a value
+(1,000 runs, 500 permutations each). Results: `audit/trust_power.csv` and the table below.
+
+| Metric | Block | Team-matches | ICC 0 (false positive) | 0.2 | 0.4 | 0.6 |
+|---|---|---|---|---|---|---|
+| back-line height (m from goal) | low | 40 | 0.05 | 0.14 | 0.48 | 0.84 |
+| back-line height (m from goal) | medium | 40 | 0.06 | 0.15 | 0.48 | 0.84 |
+| back-line width (m) | low | 40 | 0.04 | 0.13 | 0.47 | 0.85 |
+| back-line width (m) | medium | 40 | 0.04 | 0.15 | 0.48 | 0.85 |
+| back-line spread (m) | low | 40 | 0.05 | 0.12 | 0.46 | 0.83 |
+| back-line spread (m) | medium | 40 | 0.05 | 0.15 | 0.47 | 0.83 |
+| ball in front of back line (m) | low | 40 | 0.06 | 0.12 | 0.46 | 0.84 |
+| ball in front of back line (m) | medium | 40 | 0.04 | 0.12 | 0.48 | 0.85 |
+| defence-midfield gap (m) | low | 37 | 0.04 | 0.13 | 0.44 | 0.81 |
+| defence-midfield gap (m) | medium | 37 | 0.06 | 0.13 | 0.43 | 0.78 |
+| team length (m) | low | 23 | 0.04 | 0.06 | 0.15 | 0.41 |
+| team length (m) | medium | 25 | 0.06 | 0.07 | 0.19 | 0.46 |
+| team width (m) | low | 23 | 0.05 | 0.05 | 0.14 | 0.41 |
+| team width (m) | medium | 25 | 0.05 | 0.07 | 0.19 | 0.44 |
+| all 40 team-matches | - | 40 | 0.06 | 0.15 | 0.49 | 0.83 |
+
+So a team effect explaining 40% of the variance is detected 43–48% of the time for 4- and 8-player metrics and 14–19% for 10-player metrics (an earlier version quoted 43% for all; that assumed all 40 team-matches were measurable).
 
 ## Same-ball-position comparison (rules fixed 2026-10-22, before running)
 An independent review found that matching on ball x flips the sign of the back-line height difference. To report this
@@ -44,3 +64,21 @@ properly for every metric, the following was fixed before any result was compute
 Also fixed: across-match r gets n and a 95% Fisher interval; first- vs second-half r goes into the table; the 14
 across-match tests get Benjamini–Hochberg q; power is simulated per metric and block at the team-matches that were
 actually measurable (1,000 runs); the permutation p uses (k+1)/(n+1).
+
+### Results (2026-10-22)
+Synthetic validation passed first (`tests/test_trust.py`: selection only → matched difference ≈ 0; error only → bias
+recovered). Real data, on- minus off-camera, median over team-matches [95% interval from resampling teams]:
+
+| Metric | Low: all moments → same ball position | Mid: all moments → same ball position | Reading |
+|---|---|---|---|
+| Back-line height | −2.8 [−4.2, −1.6] → +0.8 [0.4, 0.9] | −3.2 [−4.2, −1.6] → +3.0 [1.6, 4.9] | (b), sign reverses |
+| Back-line width | −3.4 [−4.3, −2.6] → −0.9 [−2.1, −0.8] | −1.7 [−2.0, −1.5] → −0.6 [−0.9, −0.2] | (b), mostly ball position |
+| Back-line spread | 0.1 [−0.1, 0.2] → 0.0 [−0.2, 0.1] | 0.5 [0.3, 0.6] → 0.3 [0.0, 0.5] | low: no difference; mid (b) |
+| Ball in front of line | −6.7 [−7.6, −5.5] → −1.0 [−1.3, −0.6] | −12.8 [−14.3, −11.3] → −3.0 [−5.1, −2.0] | (b), mostly ball position |
+| Defence–midfield gap | −1.3 [−1.8, −0.9] → −1.5 [−2.1, −0.7] | −1.0 [−1.3, −0.6] → −0.2 [−0.9, 0.1] | low (b); mid (a) |
+| Team length | −7.6 [−11.0, −5.7] → −6.4 [−9.5, −4.5] | −3.3 [−4.1, −2.2] → −2.5 [−3.7, −1.9] | (b), not ball position |
+| Team width | 0.1 [−0.8, 0.5] → 0.0 [−1.2, 0.1] | −0.2 [−1.1, 0.5] → 0.3 [−1.0, 1.2] | no difference |
+
+Team-matches with enough time at matched ball positions: 11–28 of 40 (`team_matches_matched` in
+`backline/trust_table.csv`). Reading (b) means the remainder is not explained by ball position; it is not claimed to
+be estimation error.

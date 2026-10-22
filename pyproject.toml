@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "backline"
-version = "0.1.0"
+version = "0.2.0"
 description = "Back-line match reports from broadcast tracking that say how much they could actually see (SkillCorner open data)"
 readme = "README.md"
 license = { file = "LICENSE.md" }
@@ -21,4 +21,4 @@ backline = "backline.__main__:main"
 packages = ["backline"]
 
 [tool.setuptools.package-data]
-backline = ["league_reference.csv", "reliability.json"]
+backline = ["league_reference.csv", "reliability.json", "trust_table.csv"]

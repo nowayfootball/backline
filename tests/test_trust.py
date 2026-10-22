@@ -59,3 +59,35 @@ def test_trust_runs_from_an_empty_data_folder(tmp_path, monkeypatch):
     assert (tmp_path / "_cache" / "team_frames_1886347.pkl").exists()
     assert t.iloc[0].team_matches == 2 and 0 < t.iloc[0].coverage <= 1
     trust._frames.cache_clear()
+
+
+def _fake_ball(mid, rng, bias=0.0, n=24000):
+    """Line height follows the ball; the camera loses players more often when the ball is high up the pitch."""
+    rows = []
+    for team in (1, 2, 3, 4):
+        bx = rng.uniform(-40, 40, n)
+        by = rng.uniform(-30, 30, n)
+        off = rng.random(n) < np.where(bx > 0, 0.75, 0.25)          # selection: which moments are off camera
+        d = pd.DataFrame(dict(match_id=mid, frame=np.arange(n), period=np.repeat([1, 2], n // 2), phase_id=0,
+                              block="low_block", team_id=team, ball_x=bx, ball_y=by))
+        for i in range(10):
+            d[f"x{i}"] = -35 + 0.4 * (bx + 40) + 3 * i + rng.normal(0, 0.3, n) + np.where(off, bias, 0.0)
+            d[f"y{i}"] = -20 + 4 * i + rng.normal(0, 0.3, n)
+            d[f"d{i}"] = ~off
+        rows.append(d)
+    return pd.concat(rows, ignore_index=True)
+
+
+def test_same_ball_position_removes_selection_only(monkeypatch):
+    rng = np.random.default_rng(3)
+    _, s = _run(monkeypatch, {m: _fake_ball(m, rng) for m in (1, 2, 3)})
+    assert abs(s.gap_median) > 5                       # raw difference is all selection
+    assert abs(s.matched_gap_median) < 0.5
+    assert s.matched_gap_ci_lo < 0 < s.matched_gap_ci_hi
+
+
+def test_same_ball_position_recovers_estimation_error(monkeypatch):
+    rng = np.random.default_rng(4)
+    _, s = _run(monkeypatch, {m: _fake_ball(m, rng, bias=3.0) for m in (1, 2, 3)})
+    assert abs(s.matched_gap_median - (-3.0)) < 0.5    # on minus off = -bias at the same ball position
+    assert s.matched_gap_ci_hi < 0
