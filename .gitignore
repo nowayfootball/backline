@@ -1,6 +1,11 @@
-__pycache__/
-*.egg-info/
-reports/
-.pytest_cache/
-build/
 backline/league_all_rows.csv
+build/
+*.egg-info/
+/league/
+__pycache__/
+.pytest_cache/
+/reports/
+reports/
+/trust_power.csv
+/trust_table.csv
+.venv/
