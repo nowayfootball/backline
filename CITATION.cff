@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use backline, please cite it as below."
+title: "backline: can you trust this defensive metric from broadcast tracking?"
+type: software
+authors:
+  - family-names: Choi
+    given-names: Seongjin
+    email: nowayfootball@gmail.com
+    orcid: "https://orcid.org/0009-0001-3193-7424"
+version: 0.2.0
+date-released: 2026-10-23
+license: MIT
+repository-code: "https://github.com/nowayfootball/backline"
+keywords: [football, soccer, tracking data, broadcast tracking, defensive analysis, SkillCorner]

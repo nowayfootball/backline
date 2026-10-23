@@ -9,22 +9,22 @@
   Team length stays 2.5–6.4 m apart.
 - **No metric repeated as a team trait**, but with 1–7 matches per team a moderate effect would usually be missed.
 
-`backline.trust` runs these checks on any team-level defensive metric, so an analyst knows whether a number belongs
-in an opposition report before it is read as "how this team defends".
+`backline.trust` runs these checks on any team-level defensive metric, before a number reaches an opposition report.
 
 ## Why
 
-Defensive shape needs several players at once, but the camera follows the ball. Broadcast visibility limits (Bassek
-et al., *Sci. Med. Football*, 2025), metric repeatability (Franks et al., 2016) and filling in off-screen players
-(the author's arXiv:2607.11548) are known; this asks, per block and for any metric, whether the number holds up.
+Defensive shape needs several players at once, but the camera follows the ball. Known: broadcast visibility limits
+(Bassek et al., 2025), how position error weakens team-shape metrics (Corsie & Swinton, 2023; both *Sci. Med.
+Football*), metric repeatability (Franks et al., 2016) and filling in off-screen players (the author's
+arXiv:2607.11548). New here: a per-block check, on real broadcast data, that takes any defensive metric.
 
 ## Quickstart
 
 ```bash
 git clone https://github.com/nowayfootball/backline && cd backline
-python3 -m venv .venv && source .venv/bin/activate   # Python 3.10 or newer
+python3.11 -m venv .venv && source .venv/bin/activate   # any Python 3.10+
 pip install -e ".[test]" -c constraints.txt         # tested versions
-pytest                                               # 12 tests, downloads 3 matches (~1 min)
+pytest                                               # 13 tests, downloads 3 matches (~1 min)
 python -m backline.trust                             # Table 1 -> trust_table.csv (downloads 20 matches, 1.8 GB)
 python -m backline.trust_figure                      # Figure 1 -> figures/fig1_trust.png
 ```
@@ -41,7 +41,8 @@ print(trust.check(gap, uses=range(8)))     # defence-midfield gap, needs the 8 d
 
 The function gets one team's organised-defence frames from one match: `x0..x9`, `y0..y9` (outfield players by depth,
 own goal at x = −52.5), `d0..d9` (on camera?), `ball_x`, `ball_y`. Blocks are SkillCorner's phase tags. `check`
-returns every Table 1 number per block, with intervals and n (columns: `backline.trust` docstring).
+returns every Table 1 number per block, with intervals and n (`backline.trust` docstring). Other providers: pass
+your own frame table, `trust.check(gap, uses=range(8), frames=df)` (columns: `trust.FRAME_COLUMNS`).
 
 ## Results
 
@@ -50,8 +51,8 @@ returns every Table 1 number per block, with intervals and n (columns: `backline
 **Figure 1.** A: share of organised-defence time with every needed player on camera. B: on- minus off-camera value
 (same ball position = 5 m along × three bands across).
 
-**Table 1.** Seven common metrics, low / mid block, 20 matches. Brackets: team-matches compared; r uses 36–39 (18–20
-for 10-player metrics).
+**Table 1.** Seven metrics, low / mid block, 20 matches. Brackets: team-matches compared; r uses 36–39 (18–20 for
+10-player metrics); first- vs second-half r in `backline/trust_table.csv`.
 
 | Metric (players needed) | On camera | On − off, same ball position | Rank agreement on/off (ρ) | Repeat across a team's matches (r) | Use for |
 |---|---|---|---|---|---|
@@ -70,17 +71,16 @@ How to read it:
   quote metres. ✗: neither (high block: all).
 - **Sign**: negative means smaller on camera (deeper line, narrower, ball closer, shorter team).
 - **Same ball position** removes *which* moments the camera shows. The rest mixes estimation error with players
-  off camera *because of where they stand* (a defender dropping deep leaves the picture); the data cannot tell which.
-  Rules were fixed before running (after a review had seen the sign flip) and checked on synthetic data
-  ([docs](docs/trust_metrics.md)).
+  off camera *because of where they stand* (a defender dropping deep leaves the picture). Rules were fixed before
+  running (after a review had seen the sign flip) and checked on synthetic data ([docs](docs/trust_metrics.md)).
 - **Team trait**: no r survived false-discovery correction (lowest permutation p = 0.05). A team effect explaining
   40% of the variance would be detected 14–48% of the time at these sample sizes (`audit/trust_power.py`).
 
 ## Scene cards
 
 `python -m backline 1996435 --team 869 --scenes` draws a match report and a card per opponent pass tagged as
-breaking the last line (113; [example](figures/fig_scenes_en.png)). Cards blame no one: fault judgements we tried,
-such as replaying offside calls (6 of 62 reproduced), failed ([test](docs/usual_line_test.md)).
+breaking the last line (113 across the 20 matches; [example](figures/fig_scenes_en.png)). Cards blame no one: fault
+judgements we tried, such as replaying offside calls (6 of 62 reproduced), failed ([test](docs/usual_line_test.md)).
 
 ## Other matches and leagues
 
@@ -90,7 +90,6 @@ This submission uses only the provided matches.
 
 ## Notes
 
-- Tests: synthetic (off-camera error, ball-position selection, planted team effect) on Python 3.10–3.12, real
-  matches on 3.11, in CI. `audit/`: research notes.
+- CI: synthetic tests on Python 3.10–3.12, real matches on 3.11. `audit/`: research notes.
 - Licence: MIT (`LICENSE.md`). Data: SkillCorner × PySport open data (A-League 24/25) only.
 - AI use: Claude (Anthropic) helped write and review the code. Study design, judgements and final review are the author's.

@@ -99,3 +99,15 @@ def test_own_matches_json_is_kept(tmp_path, monkeypatch):
     monkeypatch.setenv("BACKLINE_DATA", str(tmp_path))
     (tmp_path / "matches.json").write_text('[{"id": 1996435}]')
     assert data.match_ids() == [1996435]
+
+
+def test_own_frames_without_skillcorner_files():
+    """trust.check on a user's own frame table (another provider), no download and no monkeypatching."""
+    import pytest
+    rng = np.random.default_rng(5)
+    df = pd.concat([_fake(m, rng, off_share=0.5) for m in (1, 2, 3)], ignore_index=True)
+    uses, fn = trust.METRICS["back-line height (m from goal)"]
+    s = trust.check(fn, uses, blocks=("low_block",), frames=df).iloc[0]
+    assert abs(s.gap_median - (-5.0)) < 0.3 and s.team_matches == 12
+    with pytest.raises(ValueError, match="missing columns"):
+        trust.check(fn, uses, frames=df.drop(columns="d3"))

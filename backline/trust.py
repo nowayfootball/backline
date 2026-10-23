@@ -86,7 +86,10 @@ METRICS = {
 
 def _team_values(args):
     mid, metric, uses, blocks = args
-    f = _frames(mid)
+    return _values(_frames(mid), mid, metric, uses, blocks)
+
+
+def _values(f: pd.DataFrame, mid, metric, uses, blocks):
     need = [f"d{i}" for i in uses]
     seen = f[need].all(axis=1) & f[[f"x{i}" for i in uses]].notna().all(axis=1)
     out = []
@@ -134,8 +137,22 @@ def _matched(metric, seen: pd.DataFrame, off: pd.DataFrame):
     return float(np.average(diffs, weights=w)), secs
 
 
-def team_values(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFrame:
-    """Per team-match and block: on-camera value, off-camera value, half values, seconds."""
+FRAME_COLUMNS = (["match_id", "team_id", "block", "period", "ball_x", "ball_y"]
+                 + [f"{c}{i}" for c in "xyd" for i in range(10)])
+
+
+def team_values(metric, uses, matches=None, blocks=BLOCKS, procs=1, frames=None) -> pd.DataFrame:
+    """Per team-match and block: on-camera value, off-camera value, half values, seconds.
+
+    `frames`: your own frames instead of the SkillCorner matches (any provider, e.g. built from a kloppy dataset):
+    one row per frame (10 fps) of a defending team, with FRAME_COLUMNS - x/y in metres with the defending team
+    attacking +x, players ordered by depth (x0 deepest), d0..d9 True when on camera, block one of BLOCKS."""
+    if frames is not None:
+        missing = [c for c in FRAME_COLUMNS if c not in frames.columns]
+        if missing:
+            raise ValueError(f"frames is missing columns: {missing}")
+        rows = [_values(g, mid, metric, tuple(uses), tuple(blocks)) for mid, g in frames.groupby("match_id")]
+        return pd.DataFrame([r for rr in rows for r in rr])
     mids = matches or data.match_ids()
     jobs = [(m, metric, tuple(uses), tuple(blocks)) for m in mids]
     if procs > 1:
@@ -214,9 +231,9 @@ def bh_q(p: pd.Series) -> pd.Series:
     return q.reindex(p.index)
 
 
-def check(metric, uses, matches=None, blocks=BLOCKS, procs=1) -> pd.DataFrame:
-    """Trust report for one metric: one row per block."""
-    return summarise(team_values(metric, uses, matches, blocks, procs))
+def check(metric, uses, matches=None, blocks=BLOCKS, procs=1, frames=None) -> pd.DataFrame:
+    """Trust report for one metric: one row per block. Pass `frames` to check your own data (see team_values)."""
+    return summarise(team_values(metric, uses, matches, blocks, procs, frames))
 
 
 if __name__ == "__main__":
