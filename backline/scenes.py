@@ -23,6 +23,8 @@ def attempts(mid: int, team_id: int) -> int:
 
 
 def scenes(mid: int, team_id: int, include_failed: bool = False) -> list[dict]:
+    """Completed (with include_failed, also attempted) passes against `team_id` tagged as breaking the last line, one dict per scene with positions at the
+    pass frame and the reception; cards with the back four and receiver on camera first."""
     m = data.meta(mid)
     team, gk, home, side = data.roster(m)
     num = {p["id"]: p.get("number") for p in m["players"]}

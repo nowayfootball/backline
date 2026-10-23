@@ -67,6 +67,8 @@ def _half_pitch(ax, xmax):
 
 def render(sc: list[dict], team_name: str, opp_name: str, out: Path, lang="en", font=None, attempts: int = 0,
            total: int | None = None):
+    """Draw a page of scene cards (from scenes.scenes) for `team_name` defending and save it to `out`; returns the path.
+    `attempts` and `total` are only used for the page header."""
     from matplotlib.lines import Line2D
     _font(lang, font)
     T = TXT[lang]

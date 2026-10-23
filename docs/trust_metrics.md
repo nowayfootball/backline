@@ -82,3 +82,14 @@ recovered). Real data, on- minus off-camera, median over team-matches [95% inter
 Team-matches with enough time at matched ball positions: 11–28 of 40 (`team_matches_matched` in
 `backline/trust_table.csv`). Reading (b) means the remainder is not explained by ball position; it is not claimed to
 be estimation error.
+
+## Changes after a second review (2026-10-23)
+- The 95% Fisher interval for the match-to-match r (fixed above) was dropped: team-matches repeat the same 13 teams
+  and share "other matches", so treating them as independent gave intervals that excluded 0 where the permutation p
+  did not (e.g. back-line height, low block: p = 0.09). A team bootstrap did not agree with the permutation either.
+  r is reported with n, permutation p and Benjamini–Hochberg q only; `audit/trust_power.py` gives the sensitivity.
+- The "Use for" column in the README (✓ when coverage ≥ 50%; *ranking* when ρ ≥ 0.7) was defined after the results
+  were seen. It is a reading aid, not a test.
+- The same-ball-position rules above were fixed before running, but after an independent review had already seen
+  the sign flip of back-line height with a simpler ball-x match. The full rules (two-dimensional cells, all metrics,
+  synthetic validation) were new; the direction for height was not.

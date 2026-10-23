@@ -62,6 +62,8 @@ def _shape(frames, team_id, block):
 
 
 def render(frames, met, team_id, team_name, opp_name, league: pd.DataFrame, out: Path, lang="en", font=None, match_id=None):
+    """Draw the one-page match report for one team (`met` from metrics.team_metrics, `league` = league reference)
+    and save it to `out`; returns the path."""
     _font(lang, font)
     T = TXT[lang]
     fig = plt.figure(figsize=(17, 13.5), facecolor=SURFACE)

@@ -32,8 +32,9 @@ Columns returned by `check` (one row per block):
     matched_gap_median, _ci_lo/hi the same at the same ball position; team_matches_matched = how many had enough time
     rank_rho                      Spearman correlation of on-camera and off-camera values across team-matches
     r_halves, n_halves            first half vs second half
-    r_cross, r_cross_ci_lo/hi, n_cross, p_cross   this match vs the same team's other matches, Fisher 95% interval,
-                                  permutation p; `python -m backline.trust` adds q_cross (Benjamini-Hochberg)
+    r_cross, n_cross, p_cross     this match vs the same team's other matches, permutation p (no interval: team-matches
+                                  repeat teams, so they are not independent); `python -m backline.trust` adds q_cross
+                                  (Benjamini-Hochberg over the low- and mid-block tests)
 
     python -m backline.trust            # the built-in metric set, all provided matches -> trust_table.csv
 """
@@ -164,13 +165,6 @@ def _cross_r(v: pd.DataFrame, rng, n_perm=2000):
     return r, n, float(((np.abs(null) >= abs(r)).sum() + 1) / (n_perm + 1))
 
 
-def _fisher_ci(r, n):
-    if np.isnan(r) or n < 4:
-        return np.nan, np.nan
-    z, se = np.arctanh(r), 1 / np.sqrt(n - 3)
-    return float(np.tanh(z - 1.96 * se)), float(np.tanh(z + 1.96 * se))
-
-
 def _team_boot(d: pd.Series, teams: pd.Series, rng, n_boot=2000):
     """95% interval of the median difference, resampling teams."""
     d, teams = d.values, teams.values
@@ -204,10 +198,10 @@ def summarise(v: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
             team_matches_matched=len(mt),
             rank_rho=float(both.seen.rank().corr(both.off.rank())) if len(both) >= 8 else np.nan,
             r_halves=float(np.corrcoef(halves.half1, halves.half2)[0, 1]) if len(halves) >= 8 else np.nan,
-            n_halves=len(halves), r_cross=r_cross, r_cross_ci=_fisher_ci(r_cross, n_cross), n_cross=n_cross,
+            n_halves=len(halves), r_cross=r_cross, n_cross=n_cross,
             p_cross=p_cross))
     t = pd.DataFrame(out)
-    for c in ("gap_ci", "matched_gap_ci", "r_cross_ci"):
+    for c in ("gap_ci", "matched_gap_ci"):
         t[[c + "_lo", c + "_hi"]] = pd.DataFrame(t.pop(c).tolist(), index=t.index)
     return t
 

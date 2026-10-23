@@ -91,3 +91,11 @@ def test_same_ball_position_recovers_estimation_error(monkeypatch):
     _, s = _run(monkeypatch, {m: _fake_ball(m, rng, bias=3.0) for m in (1, 2, 3)})
     assert abs(s.matched_gap_median - (-3.0)) < 0.5    # on minus off = -bias at the same ball position
     assert s.matched_gap_ci_hi < 0
+
+
+def test_own_matches_json_is_kept(tmp_path, monkeypatch):
+    """A short user-made matches.json (other matches or leagues) must not be replaced by SkillCorner's list."""
+    from backline import data
+    monkeypatch.setenv("BACKLINE_DATA", str(tmp_path))
+    (tmp_path / "matches.json").write_text('[{"id": 1996435}]')
+    assert data.match_ids() == [1996435]

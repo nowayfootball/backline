@@ -31,11 +31,12 @@ def draw(t: pd.DataFrame, out: str):
         a.bar(xs, cov.loc[needs, blk] * 100, w, color=COL[blk], label=NAME[blk])
         for x, v in zip(xs, cov.loc[needs, blk] * 100):
             a.text(x, v + 1.5, f"{v:.0f}", ha="center", va="bottom", fontsize=12, color=INK)
-    a.set_xticks(np.arange(len(needs)), [f"{n} deepest\nplayers" if n < 10 else "all 10\noutfield" for n in needs])
+    a.set_xticks(np.arange(len(needs)), [f"{n} deepest" if n < 10 else "all 10" for n in needs])
+    a.set_xlabel("outfield players the metric needs")
     a.set_ylim(0, 85); a.set_ylabel("% of time all needed players on camera")
     a.spines[["top", "right"]].set_visible(False); a.yaxis.grid(True, color=GRID); a.set_axisbelow(True)
     a.legend(frameon=False, loc="upper right", fontsize=12)
-    a.set_title("A  What the camera sees", loc="left", fontweight="bold", pad=34)
+    a.set_title("A  High block: rarely on camera", loc="left", fontweight="bold", pad=34)
 
     # B: on-camera minus off-camera, raw (hollow) and same ball position (filled), 95% team-bootstrap intervals
     m = t[t.block.isin(["low_block", "medium_block"])]
@@ -53,17 +54,18 @@ def draw(t: pd.DataFrame, out: str):
             b.plot(r.matched_gap_median, y, "o", ms=9, color=c, mec="white", mew=1.5)
     b.axvline(0, color=MUTED, lw=1)
     b.set_yticks(range(len(metrics)), [SHORT[x] for x in metrics]); b.invert_yaxis()
-    b.set_xlabel("on-camera minus off-camera value (m), median over team-matches")
+    b.set_xlabel("on-camera minus off-camera value (m), median over team-matches\n"
+                 "\u2190 smaller on camera          larger on camera \u2192")
     b.spines[["top", "right", "left"]].set_visible(False); b.tick_params(axis="y", length=0)
     b.xaxis.grid(True, color=GRID); b.set_axisbelow(True)
-    b.set_title("B  How different the off-camera moments are", loc="left", fontweight="bold", pad=34)
+    b.set_title("B  Off-camera moments differ", loc="left", fontweight="bold", pad=34)
     h = [plt.Line2D([], [], marker="o", ls="", ms=9, mfc="white", mec=MUTED, mew=2, label="all moments"),
          plt.Line2D([], [], marker="o", ls="", ms=9, color=MUTED, label="same ball position"),
          plt.Line2D([], [], color=COL["low_block"], lw=3, label="low block"),
          plt.Line2D([], [], color=COL["medium_block"], lw=3, label="mid block")]
     b.legend(handles=h, frameon=False, loc="lower center", bbox_to_anchor=(0.45, 0.995), fontsize=12, ncol=4,
              handletextpad=0.4, columnspacing=1.2)
-    fig.text(0.01, 0.005, "20 A-League 24/25 matches, organised defence. B: lines are 95% intervals from resampling teams "
+    fig.text(0.01, -0.07, "20 A-League 24/25 matches, organised defence. B: lines are 95% intervals from resampling teams "
              "(thin: all moments, thick: same ball position).\nHigh block: never 60 s with all needed players on camera, so not compared.",
              fontsize=11, color=MUTED)
     fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")

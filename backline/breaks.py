@@ -82,6 +82,7 @@ def _one(mid, which="breaks"):
 
 
 def classify(df: pd.DataFrame) -> pd.DataFrame:
+    """Add a `verdict` column (no_data / estimated / too_close / looks_offside / holder_kept_onside / clean_break)."""
     def verdict(r):
         if pd.isna(r.get("onside_margin")):
             return "no_data"
@@ -100,6 +101,7 @@ def classify(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def all_breaks(mids=None, procs=3, which="breaks") -> pd.DataFrame:
+    """Offside-replay rows for every line-breaking pass in `mids` (default: all matches), in `procs` processes."""
     mids = mids or data.match_ids()
     with Pool(procs) as p:
         return classify(pd.concat(p.starmap(_one, [(m, which) for m in mids]), ignore_index=True))

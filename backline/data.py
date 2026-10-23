@@ -22,8 +22,10 @@ def league_dir() -> Path:
     return Path(os.environ["BACKLINE_LEAGUE"]) if os.environ.get("BACKLINE_LEAGUE") else Path(__file__).parent
 
 
-def _fetch(url: str, dest: Path) -> Path:
-    if dest.exists() and dest.stat().st_size > 1000:
+def _fetch(url: str, dest: Path, min_size: int = 1) -> Path:
+    """Download unless the file is already there. Existing files are kept, so a user's own matches.json is never
+    replaced; `min_size` makes tracking files smaller than a real one (e.g. a Git LFS pointer) download again."""
+    if dest.exists() and dest.stat().st_size >= min_size:
         return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
@@ -35,6 +37,7 @@ def _fetch(url: str, dest: Path) -> Path:
 
 
 def match_ids() -> list[int]:
+    """Match ids from BACKLINE_DATA/matches.json (a list of {"id": ...}); SkillCorner's list is fetched only if absent."""
     p = _fetch(f"{RAW}/matches.json", data_dir() / "matches.json")
     return sorted(m["id"] for m in json.loads(p.read_text()))
 
@@ -48,7 +51,7 @@ def download(mids=None, verbose=True) -> None:
         trk = base / f"{mid}_tracking_extrapolated.jsonl"
         if not (trk.exists() and trk.stat().st_size > 1000):
             print(f"downloading match {mid} tracking (~90 MB, first run only)...", flush=True)
-        _fetch(f"{LFS}/matches/{mid}/{mid}_tracking_extrapolated.jsonl", trk)
+        _fetch(f"{LFS}/matches/{mid}/{mid}_tracking_extrapolated.jsonl", trk, min_size=1000)
         if verbose:
             print("downloaded", mid, flush=True)
 

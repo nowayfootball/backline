@@ -53,6 +53,8 @@ def _value(name: str, f: pd.DataFrame) -> float:
 
 
 def team_metrics(frames: pd.DataFrame, team_id: int, seed: int = 0, n_boot: int = N_BOOT) -> pd.DataFrame:
+    """One row per metric and block for `team_id`: value on measured frames (all four on camera), seconds measured,
+    90% interval from resampling defensive phases, and the league first-half/second-half and match-to-match r."""
     f = _add_frame_cols(frames[frames.team_id == team_id])
     rng = np.random.default_rng(seed)
     out = []

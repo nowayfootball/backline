@@ -57,6 +57,9 @@ if __name__ == "__main__":
         allr = pd.concat(p.map(one, data.match_ids()), ignore_index=True)
     allr[allr.half == 0].drop(columns="half").to_csv(out / "league_reference.csv", index=False)
     rel = reliability(allr)
+    if not rel:
+        print("note: reliability.json is empty - first/second-half and match-to-match r need at least 8 team-matches "
+              "with a value (and, across matches, teams with 2+ matches)")
     (out / "reliability.json").write_text(json.dumps(rel, indent=1))
     print("saved", out / "league_reference.csv", out / "reliability.json")
     print(f"use it: BACKLINE_LEAGUE={out} python -m backline MATCH_ID")
